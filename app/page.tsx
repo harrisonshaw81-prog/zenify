@@ -5,6 +5,7 @@ import CheckoutButton from '@/components/CheckoutButton'
 import StarBackground from '@/components/ui/star-background'
 import { TiltCard } from '@/components/ui/tilt-card'
 import RestoreAccessButton from '@/components/RestoreAccessButton'
+import ProductMockup from '@/components/ui/product-mockup'
 
 export default async function Home() {
   const cookieStore = await cookies()
@@ -16,6 +17,7 @@ export default async function Home() {
       <div style={{ position: 'relative', zIndex: 1 }}>
       <Navbar isPro={isPro} />
       <Hero isPro={isPro} />
+      <AnalyzerSection isPro={isPro} />
       <Features />
       <HowItWorks />
       <Pricing isPro={isPro} />
@@ -55,32 +57,101 @@ function Navbar({ isPro }: { isPro: boolean }) {
 
 function Hero({ isPro }: { isPro: boolean }) {
   return (
-    <section style={{ position: 'relative', overflow: 'hidden', paddingTop: 100, paddingBottom: 80, textAlign: 'center' }}>
+    <section style={{ position: 'relative', overflow: 'hidden', paddingTop: 80, paddingBottom: 80 }}>
       <div style={{
-        position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute', top: -100, left: '30%', transform: 'translateX(-50%)',
         width: 700, height: 500,
-        background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.18) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.15) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 24px', position: 'relative' }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px',
-          borderRadius: 999, border: '1px solid var(--border)', background: 'var(--surface)',
-          fontSize: 13, fontWeight: 500, color: 'var(--accent-light)', marginBottom: 28,
-        }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
-          {isPro ? '✓ Pro — Full Access' : 'Intelligent Channel Analysis'}
+      <div style={{
+        maxWidth: 1120, margin: '0 auto', padding: '0 24px',
+        display: 'grid', gridTemplateColumns: '1fr 1fr',
+        gap: 64, alignItems: 'center',
+      }}>
+        {/* Left: copy only */}
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px',
+            borderRadius: 999, border: '1px solid var(--border)', background: 'var(--surface)',
+            fontSize: 13, fontWeight: 500, color: 'var(--accent-light)', marginBottom: 28,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
+            {isPro ? '✓ Pro — Full Access' : 'Intelligent Channel Analysis'}
+          </div>
+          <h1 style={{
+            fontSize: 'clamp(34px, 4vw, 58px)', fontWeight: 800, lineHeight: 1.1,
+            letterSpacing: '-2px', marginBottom: 20,
+          }}>
+            Turn Channel Data Into{' '}
+            <span style={{ color: 'var(--accent)' }}>Viral Video Ideas</span>
+          </h1>
+          <p style={{ fontSize: 17, color: 'var(--muted)', lineHeight: 1.7, fontWeight: 400 }}>
+            Paste any YouTube channel URL. Zenify analyses your top-performing videos and delivers 5 ranked ideas with performance predictions — complete with AI-generated thumbnails.
+          </p>
         </div>
-        <h1 style={{
-          fontSize: 'clamp(40px, 7vw, 72px)', fontWeight: 800, lineHeight: 1.1,
-          letterSpacing: '-2px', marginBottom: 24,
-        }}>
-          Turn Channel Data Into<br />
-          <span style={{ color: 'var(--accent)' }}>Viral Video Ideas</span>
-        </h1>
-        <p style={{ fontSize: 18, color: 'var(--muted)', lineHeight: 1.7, maxWidth: 540, margin: '0 auto 48px', fontWeight: 400 }}>
-          Paste any YouTube channel URL. Zenify deep-analyses your top-performing videos and delivers 5 ranked ideas with performance predictions — complete with titles and thumbnail concepts.
-        </p>
+
+        {/* Right: 3D product mockup */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+          <ProductMockup />
+        </div>
+      </div>
+
+      {/* Mobile stack override */}
+      <style>{`
+        @media (max-width: 768px) {
+          .hero-grid { grid-template-columns: 1fr !important; }
+          .hero-mockup { display: none !important; }
+        }
+      `}</style>
+    </section>
+  )
+}
+
+function AnalyzerSection({ isPro }: { isPro: boolean }) {
+  return (
+    <section style={{ padding: '0 24px 100px', position: 'relative' }}>
+      {/* Spotlight glow behind the box */}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 800, height: 400,
+        background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.13) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{
+        maxWidth: 960, margin: '0 auto', position: 'relative',
+        background: 'rgba(139,92,246,0.04)',
+        border: '1px solid rgba(139,92,246,0.25)',
+        borderRadius: 24,
+        padding: '48px 48px 40px',
+        boxShadow: '0 0 0 1px rgba(139,92,246,0.08), 0 24px 80px rgba(0,0,0,0.3), inset 0 1px 0 rgba(139,92,246,0.15)',
+      }}>
+        {/* Corner accents */}
+        <div style={{ position: 'absolute', top: -1, left: -1, width: 40, height: 40, borderTop: '2px solid var(--accent)', borderLeft: '2px solid var(--accent)', borderRadius: '24px 0 0 0', opacity: 0.6 }} />
+        <div style={{ position: 'absolute', top: -1, right: -1, width: 40, height: 40, borderTop: '2px solid var(--accent)', borderRight: '2px solid var(--accent)', borderRadius: '0 24px 0 0', opacity: 0.6 }} />
+        <div style={{ position: 'absolute', bottom: -1, left: -1, width: 40, height: 40, borderBottom: '2px solid var(--accent)', borderLeft: '2px solid var(--accent)', borderRadius: '0 0 0 24px', opacity: 0.6 }} />
+        <div style={{ position: 'absolute', bottom: -1, right: -1, width: 40, height: 40, borderBottom: '2px solid var(--accent)', borderRight: '2px solid var(--accent)', borderRadius: '0 0 24px 0', opacity: 0.6 }} />
+
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px',
+            borderRadius: 999, border: '1px solid rgba(139,92,246,0.3)',
+            background: 'rgba(139,92,246,0.08)', fontSize: 12, fontWeight: 600,
+            color: 'var(--accent-light)', marginBottom: 14, letterSpacing: '0.3px',
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block', boxShadow: '0 0 6px var(--accent)' }} />
+            Try it free — no account needed
+          </div>
+          <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.8px', marginBottom: 8 }}>
+            Analyze any YouTube channel
+          </h2>
+          <p style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.6 }}>
+            Paste a channel URL below and get 5 ranked video ideas in seconds.
+          </p>
+        </div>
+
         <Analyzer isPro={isPro} />
       </div>
     </section>

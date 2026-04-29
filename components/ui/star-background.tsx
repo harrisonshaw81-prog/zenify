@@ -14,7 +14,13 @@ interface Streak {
   len: number; born: number; dur: number
 }
 
+interface Nebula {
+  x: number; y: number; vx: number; vy: number
+  rx: number; ry: number; phase: number; rgb: string
+}
+
 const PALETTES = ['255,255,255', '230,220,255', '210,225,255', '255,248,240']
+const NEBULA_COLORS = ['139,92,246', '109,40,217', '124,58,237', '76,29,149']
 
 export default function StarBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -29,12 +35,23 @@ export default function StarBackground() {
     let shotElapsed = 0
     let stars: Star[] = []
     let streaks: Streak[] = []
+    let nebulae: Nebula[] = []
     const mouse = { x: 0.5, y: 0.5 }
     const parallax = { x: 0, y: 0 }
     const MAX_PARALLAX = 28
 
     function initStars() {
       const w = canvas.width, h = canvas.height
+      nebulae = Array.from({ length: 5 }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: (Math.random() - 0.5) * 0.12,
+        rx: 220 + Math.random() * 280,
+        ry: 140 + Math.random() * 180,
+        phase: Math.random() * Math.PI * 2,
+        rgb: NEBULA_COLORS[Math.floor(Math.random() * NEBULA_COLORS.length)],
+      }))
       stars = Array.from({ length: 210 }, (_, i) => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -89,6 +106,30 @@ export default function StarBackground() {
 
       const w = canvas.width, h = canvas.height
       ctx.clearRect(0, 0, w, h)
+
+      // Nebula blobs (behind everything)
+      for (const n of nebulae) {
+        n.phase += 0.0015
+        n.x += n.vx; n.y += n.vy
+        if (n.x < -n.rx) n.x = w + n.rx
+        else if (n.x > w + n.rx) n.x = -n.rx
+        if (n.y < -n.ry) n.y = h + n.ry
+        else if (n.y > h + n.ry) n.y = -n.ry
+        const op = (0.07 + 0.04 * Math.sin(n.phase)).toFixed(3)
+        const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.rx)
+        grad.addColorStop(0, `rgba(${n.rgb},${op})`)
+        grad.addColorStop(0.5, `rgba(${n.rgb},${(parseFloat(op) * 0.4).toFixed(3)})`)
+        grad.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.save()
+        ctx.translate(n.x, n.y)
+        ctx.scale(1, n.ry / n.rx)
+        ctx.translate(-n.x, -n.y)
+        ctx.fillStyle = grad
+        ctx.beginPath()
+        ctx.arc(n.x, n.y, n.rx, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.restore()
+      }
 
       // Stars with per-layer parallax offset
       for (const s of stars) {
