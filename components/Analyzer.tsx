@@ -184,7 +184,7 @@ export default function Analyzer({ isPro = false }: { isPro?: boolean }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {result.ideas.map((idea, i) => (
-              <IdeaCard key={i} idea={idea} index={i} isPro={isPro} faceRefs={result.faceRefs} thumbnailStyle={result.thumbnailStyle} />
+              <IdeaCard key={i} idea={idea} index={i} isPro={isPro} faceRefs={result.faceRefs} thumbnailStyle={result.thumbnailStyle} channelName={result.channelName} />
             ))}
           </div>
 
@@ -213,7 +213,7 @@ export default function Analyzer({ isPro = false }: { isPro?: boolean }) {
   )
 }
 
-function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle }: { idea: VideoIdea; index: number; isPro: boolean; faceRefs?: string[]; thumbnailStyle?: string }) {
+function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle, channelName }: { idea: VideoIdea; index: number; isPro: boolean; faceRefs?: string[]; thumbnailStyle?: string; channelName?: string }) {
   const isLocked = index > 0 && !isPro
   const [thumbState, setThumbState] = useState<'idle' | 'loading' | 'done' | 'error' | 'pro_required'>('idle')
   const [thumbUrl, setThumbUrl] = useState<string | null>(null)
@@ -230,7 +230,7 @@ function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle }: { idea: Vide
         method: 'POST',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: idea.title, faceRefs, thumbnailStyle, _t: Date.now() }),
+        body: JSON.stringify({ title: idea.title, faceRefs, thumbnailStyle, channelName, _t: Date.now() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')

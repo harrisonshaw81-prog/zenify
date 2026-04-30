@@ -88,7 +88,7 @@ async function cropAndRemoveBackground(
 
 export async function POST(request: Request) {
   try {
-    const { title, faceRefs, thumbnailStyle } = await request.json()
+    const { title, faceRefs, thumbnailStyle, channelName } = await request.json()
     if (!title) return Response.json({ error: 'title is required' }, { status: 400 })
 
     // One-liner style hint — strip headers, quoted examples, and bullet syntax
@@ -193,11 +193,13 @@ no`,
       }
     }
 
+    const channelCtx = channelName ? ` This video is from the channel "${channelName}" — use that context to infer the correct game, franchise, or topic for the background scene.` : ''
+
     let imagePrompt: string
     if (characterRef) {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${channelCtx}${styleHint ? ` Style: ${styleHint}` : ''}`
     } else {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${channelCtx}${styleHint ? ` Style: ${styleHint}` : ''}`
     }
 
     console.log(`[thumb] identityType: ${identityType}, hasRef: ${!!characterRef}, bgRemoved: ${bgRemoved}`)
