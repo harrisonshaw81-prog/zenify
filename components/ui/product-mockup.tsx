@@ -139,7 +139,7 @@ function Scene2() {
         justifyContent: 'center', gap: 4,
       }}>
         <span style={{ fontSize: 8, color: MUTED }}>🔒</span>
-        <span style={{ fontSize: 8, color: MUTED }}>2 more ideas — upgrade to Pro</span>
+        <span style={{ fontSize: 8, color: MUTED }}>2 more ideas - upgrade to Pro</span>
       </div>
     </div>
   )
@@ -164,7 +164,7 @@ function Scene3() {
           I Bought Every Car at This Junkyard
         </div>
         <div style={{ fontSize: 8, color: MUTED, lineHeight: 1.5, marginBottom: 10 }}>
-          Matches your top pattern — destruction + extreme scale drives 4.2× avg views on this channel.
+          Matches your top pattern - destruction + extreme scale drives 4.2× avg views on this channel.
         </div>
         <div style={{
           borderRadius: 6, overflow: 'hidden',

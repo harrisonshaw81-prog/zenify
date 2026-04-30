@@ -1,4 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export const maxDuration = 60
+import { verifyProCookie, COOKIE_NAME as PRO_COOKIE } from '@/lib/pro-cookie'
+import { signFreeCookie, verifyFreeCookie, FREE_COOKIE_NAME, FREE_DAILY_LIMIT } from '@/lib/free-usage'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const YT_KEY = process.env.YOUTUBE_API_KEY
@@ -110,16 +116,65 @@ async function getTopVideos(videoIds: string[]): Promise<VideoStats[]> {
 }
 
 // Call Claude to generate 5 video ideas
-async function generateIdeas(channelName: string, videos: VideoStats[]) {
+async function fetchBase64(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return null
+    return Buffer.from(await res.arrayBuffer()).toString('base64')
+  } catch {
+    return null
+  }
+}
+
+async function analyzeChannelStyle(thumbnailImages: string[]): Promise<string> {
+  if (thumbnailImages.length === 0) return ''
+
+  const content: Anthropic.MessageParam['content'] = [
+    ...thumbnailImages.map(data => ({
+      type: 'image' as const,
+      source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data },
+    })),
+    {
+      type: 'text' as const,
+      text: `Analyze these top-performing YouTube thumbnails and describe this channel's consistent thumbnail style.
+
+Cover:
+- Background and setting (environments, footage, scenes they consistently use)
+- Color palette (dominant colors, contrast level, saturation)
+- Text treatment (font weight, position on screen, color, shadow or outline effects)
+- Graphic overlays or design elements
+- Composition and framing
+- Overall energy and mood
+
+Be specific and descriptive. Do not mention any people, faces, or expressions. Write as a style guide that could reproduce this channel's exact thumbnail aesthetic.`,
+    },
+  ]
+
+  const msg = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 400,
+    messages: [{ role: 'user', content }],
+  })
+
+  return msg.content[0].type === 'text' ? msg.content[0].text.trim() : ''
+}
+
+async function generateIdeas(channelName: string, videos: VideoStats[], thumbnailImages: string[]) {
   const videoList = videos.map((v, i) =>
-    `${i + 1}. "${v.title}" — ${v.views.toLocaleString()} views, ${v.likes.toLocaleString()} likes`
+    `${i + 1}. "${v.title}" - ${v.views.toLocaleString()} views, ${v.likes.toLocaleString()} likes`
   ).join('\n')
 
   const systemPrompt = `You are an expert YouTube growth strategist with deep knowledge of content optimization, audience psychology, and viral video mechanics. You analyze channel data and generate high-potential video ideas backed by data patterns.
 
-Always respond with valid JSON only — no markdown, no extra text.`
+Always respond with valid JSON only - no markdown, no extra text.`
 
-  const userPrompt = `Channel: ${channelName}
+  const imageNote = thumbnailImages.length > 0
+    ? `The attached images are the top-performing thumbnails from this channel. Study their visual style carefully: color palette, composition, text treatment, lighting, mood, and energy. The thumbnailConcept for each idea must match and build on this established visual style.`
+    : ''
+
+  const userText = `Channel: ${channelName}
+
+${imageNote}
 
 Top performing videos:
 ${videoList}
@@ -131,12 +186,20 @@ Respond with this exact JSON structure:
   "ideas": [
     {
       "rank": 1,
-      "title": "exact video title optimized for clicks and search",
+      "title": "exact video title optimized for clicks and search — no hashtags, no emojis",
       "performanceReason": "2-3 sentence explanation of why this will perform based on the channel's proven patterns",
-      "thumbnailConcept": "Describe the visual scene — colors, setting, mood, lighting, props, objects, text style and placement. Written like you're describing it to someone. No technical prompt language."
+      "thumbnailConcept": "Visual brief rooted in this channel's thumbnail style. Do NOT describe any person, face, expression, or body pose. Describe only: the setting and background, dominant color palette, lighting style, emotional energy, and how the title text appears (position, weight, color). Match the visual style of their top thumbnails. Be specific and cinematic."
     }
   ]
 }`
+
+  const userContent: Anthropic.MessageParam['content'] = [
+    ...thumbnailImages.map(data => ({
+      type: 'image' as const,
+      source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data },
+    })),
+    { type: 'text' as const, text: userText },
+  ]
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -148,11 +211,10 @@ Respond with this exact JSON structure:
         cache_control: { type: 'ephemeral' },
       },
     ],
-    messages: [{ role: 'user', content: userPrompt }],
+    messages: [{ role: 'user', content: userContent }],
   })
 
   const text = message.content[0].type === 'text' ? message.content[0].text : ''
-  // Strip markdown code fences if present
   const clean = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
   return JSON.parse(clean)
 }
@@ -160,27 +222,60 @@ Respond with this exact JSON structure:
 export async function POST(request: Request) {
   try {
     const { url } = await request.json()
-    if (!url) return Response.json({ error: 'URL is required' }, { status: 400 })
+    if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 })
+
+    const cookieStore = await cookies()
+    const isPro = verifyProCookie(cookieStore.get(PRO_COOKIE)?.value)
+
+    const today = new Date().toISOString().split('T')[0]
+    let freeCount = 0
+
+    if (!isPro) {
+      const existing = verifyFreeCookie(cookieStore.get(FREE_COOKIE_NAME)?.value)
+      freeCount = existing?.day === today ? existing.count : 0
+      if (freeCount >= FREE_DAILY_LIMIT) {
+        return NextResponse.json(
+          { error: 'free_limit_reached', message: `Free tier allows ${FREE_DAILY_LIMIT} analyses per day. Upgrade to Pro for unlimited.` },
+          { status: 429 }
+        )
+      }
+    }
 
     const channel = await resolveChannelId(url)
     const uploadsId = await getUploadsPlaylistId(channel.id)
     const videoIds = await getPlaylistVideoIds(uploadsId)
     const topVideos = await getTopVideos(videoIds)
-    const analysis = await generateIdeas(channel.name, topVideos)
 
-    // Top 3 video thumbnails as face references — high-res, always show the creator
-    const faceRefs = topVideos.slice(0, 3).map(v => `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`)
+    const faceRefs = topVideos.slice(0, 8).map(v => `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`)
+    const thumbnailImages = (await Promise.all(faceRefs.slice(0, 3).map(fetchBase64))).filter((d): d is string => d !== null)
 
-    return Response.json({
+    const [analysis, thumbnailStyle] = await Promise.all([
+      generateIdeas(channel.name, topVideos, thumbnailImages),
+      analyzeChannelStyle(thumbnailImages),
+    ])
+
+    const response = NextResponse.json({
       channelName: channel.name,
       subscriberCount: channel.subs,
       totalVideosAnalyzed: topVideos.length,
       channelAvatar: channel.avatar,
       faceRefs,
+      thumbnailStyle,
       ideas: analysis.ideas,
     })
+
+    if (!isPro) {
+      response.cookies.set(FREE_COOKIE_NAME, signFreeCookie(freeCount + 1, today), {
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 2 * 24 * 60 * 60,
+        path: '/',
+      })
+    }
+
+    return response
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Analysis failed'
-    return Response.json({ error: message }, { status: 500 })
+    const message = 'Something went wrong, please try again.'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -40,7 +40,8 @@ export default function RestoreAccessButton() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, animation: 'fadeSlideIn 0.2s ease-out' }}>
+      <style>{`@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <input
           type="email"

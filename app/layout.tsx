@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'Zenify — YouTube Channel Analyzer',
+  title: 'Zenify - YouTube Channel Analyzer',
   description: 'Paste a YouTube channel URL. Get 5 ranked video ideas with performance predictions.',
 }
 

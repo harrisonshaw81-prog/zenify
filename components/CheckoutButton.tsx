@@ -25,7 +25,7 @@ export default function CheckoutButton({ style }: { style?: React.CSSProperties 
       }}
     >
       <button onClick={handleClick} disabled={loading} style={style}>
-        {loading ? 'Redirecting…' : 'Get Pro — $19/month'}
+        {loading ? 'Redirecting…' : 'Get Pro - $19/month'}
       </button>
     </TiltCard>
   )
