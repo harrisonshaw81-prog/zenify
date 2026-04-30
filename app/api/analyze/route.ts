@@ -86,11 +86,37 @@ interface VideoStats {
   description: string
 }
 
-async function getTopVideos(videoIds: string[]): Promise<VideoStats[]> {
+// Generic Wikipedia slugs to ignore when detecting game names
+const GENERIC_TOPICS = new Set([
+  'Video_game', 'Video_games', 'Action_game', 'Shooter_game', 'First-person_shooter',
+  'Battle_royale_game', 'Role-playing_video_game', 'Strategy_video_game', 'Sport',
+  'Action-adventure_game', 'Massively_multiplayer_online_game', 'Gaming_computer',
+  'Entertainment', 'Hobby',
+])
+
+async function getTopVideos(videoIds: string[]): Promise<{ videos: VideoStats[], detectedGame: string }> {
   if (!videoIds.length) throw new Error('No public videos found on this channel.')
   const ids = videoIds.slice(0, 50).join(',')
-  const res = await fetch(`${YT}/videos?part=snippet,statistics&id=${ids}&key=${YT_KEY}`)
+  const res = await fetch(`${YT}/videos?part=snippet,statistics,topicDetails&id=${ids}&key=${YT_KEY}`)
   const data = await res.json()
+
+  // Count specific game names from topicDetails.topicCategories Wikipedia URLs
+  const gameCounts: Record<string, number> = {}
+  for (const v of data.items || []) {
+    const cats: string[] = v.topicDetails?.topicCategories ?? []
+    for (const url of cats) {
+      const slug = (url.split('/wiki/').pop() ?? '').split('#')[0]
+      if (slug && !GENERIC_TOPICS.has(slug)) {
+        const name = decodeURIComponent(slug).replace(/_/g, ' ')
+        gameCounts[name] = (gameCounts[name] ?? 0) + 1
+      }
+    }
+  }
+
+  // Use the most common game if it appears in 2+ videos
+  const detectedGame = Object.entries(gameCounts)
+    .filter(([, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
 
   const videos: VideoStats[] = (data.items || []).map((v: {
     id: string
@@ -105,7 +131,7 @@ async function getTopVideos(videoIds: string[]): Promise<VideoStats[]> {
   }))
 
   if (!videos.length) throw new Error('No public videos found on this channel.')
-  return videos.sort((a, b) => b.views - a.views).slice(0, 10)
+  return { videos: videos.sort((a, b) => b.views - a.views).slice(0, 10), detectedGame }
 }
 
 async function fetchBase64(url: string): Promise<string | null> {
@@ -276,7 +302,7 @@ export async function POST(request: Request) {
     const channel = await resolveChannelId(url)
     const uploadsId = await getUploadsPlaylistId(channel.id)
     const videoIds = await getPlaylistVideoIds(uploadsId)
-    const topVideos = await getTopVideos(videoIds)
+    const { videos: topVideos, detectedGame } = await getTopVideos(videoIds)
 
     const faceRefs = topVideos.slice(0, 8).map(v => `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`)
     const thumbnailImages = (await Promise.all(faceRefs.slice(0, 3).map(fetchBase64))).filter((d): d is string => d !== null)
@@ -286,6 +312,9 @@ export async function POST(request: Request) {
       analyzeChannelStyle(thumbnailImages),
     ])
 
+    // Prefer hard game data from YouTube metadata; fall back to Claude's inference
+    const channelTopic = detectedGame || (analysis as { channelTopic?: string }).channelTopic || ''
+
     const response = NextResponse.json({
       channelName: channel.name,
       subscriberCount: channel.subs,
@@ -293,7 +322,7 @@ export async function POST(request: Request) {
       channelAvatar: channel.avatar,
       faceRefs,
       thumbnailStyle,
-      channelTopic: (analysis as { channelTopic?: string }).channelTopic ?? '',
+      channelTopic,
       ideas: (analysis as { ideas: unknown[] }).ideas,
     })
 
