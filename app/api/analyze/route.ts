@@ -215,8 +215,9 @@ Respond with this exact JSON structure:
   })
 
   const text = message.content[0].type === 'text' ? message.content[0].text : ''
-  const clean = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
-  return JSON.parse(clean)
+  const match = text.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('No JSON found in model response')
+  return JSON.parse(match[0])
 }
 
 export async function POST(request: Request) {
