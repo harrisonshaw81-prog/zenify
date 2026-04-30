@@ -71,7 +71,6 @@ async function cropAndRemoveBackground(
   const bgRemovedPng = await removeBackgroundFal(imageUrl)
 
   // Step 2: crop the bg-removed PNG down to just the character bbox
-  const bgRemovedBase64 = bgRemovedPng.toString('base64')
   const img = sharp(bgRemovedPng)
   const { width: w = 480, height: h = 360 } = await img.metadata()
   const left = Math.max(0, Math.round((bbox.left / 100) * w))
@@ -119,14 +118,15 @@ export async function POST(request: Request) {
     let bgRemoved = false
 
     if (images.length >= 1) {
-      const detectionContent: Anthropic.MessageParam['content'] = [
-        ...images.map(data => ({
-          type: 'image' as const,
-          source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data },
-        })),
-        {
-          type: 'text' as const,
-          text: `Find the character or face that appears in the MOST of these thumbnails. Output ONLY a single line — no explanation, no extra text.
+      try {
+        const detectionContent: Anthropic.MessageParam['content'] = [
+          ...images.map(data => ({
+            type: 'image' as const,
+            source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data },
+          })),
+          {
+            type: 'text' as const,
+            text: `Find the character or face that appears in the MOST of these thumbnails. Output ONLY a single line — no explanation, no extra text.
 
 Format: yes: [type] | [best image index 0-based]:[left%,top%,right%,bottom%]
 Or if none: no
@@ -136,59 +136,60 @@ yes: blue Minecraft avatar | 3:8,5,42,90
 yes: person | 0:20,5,65,88
 yes: VRChat avatar | 2:10,5,40,88
 no`,
-        },
-      ]
+          },
+        ]
 
-      const detectionMsg = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 80,
-        system: 'You output ONLY the exact format requested. No thinking, no preamble, no explanation. One line.',
-        messages: [{ role: 'user', content: detectionContent }],
-      })
+        const detectionMsg = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 80,
+          system: 'You output ONLY the exact format requested. No thinking, no preamble, no explanation. One line.',
+          messages: [{ role: 'user', content: detectionContent }],
+        })
 
-      const rawAnswer = detectionMsg.content[0].type === 'text' ? detectionMsg.content[0].text.trim() : ''
-      console.log(`[thumb] detection: "${rawAnswer}"`)
+        const rawAnswer = detectionMsg.content[0]?.type === 'text' ? detectionMsg.content[0].text.trim() : ''
+        console.log(`[thumb] detection: "${rawAnswer}"`)
 
-      const yesLine = rawAnswer.split('\n').find(l => /^yes:/i.test(l.trim()))?.trim() ?? ''
+        const yesLine = rawAnswer.split('\n').find(l => /^yes:/i.test(l.trim()))?.trim() ?? ''
 
-      if (yesLine) {
-        const parts = yesLine.split('|')
-        identityType = parts[0].replace(/^yes:\s*/i, '').trim()
+        if (yesLine) {
+          const parts = yesLine.split('|')
+          identityType = parts[0].replace(/^yes:\s*/i, '').trim()
 
-        // Parse "index:left,top,right,bottom"
-        const refPart = (parts[1] ?? '').trim()
-        const match = refPart.match(/^(\d+):(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/)
+          const refPart = (parts[1] ?? '').trim()
+          const match = refPart.match(/^(\d+):(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/)
 
-        if (match) {
-          const idx = parseInt(match[1], 10)
-          const bbox = {
-            left: parseFloat(match[2]),
-            top: parseFloat(match[3]),
-            right: parseFloat(match[4]),
-            bottom: parseFloat(match[5]),
-          }
+          if (match) {
+            const idx = parseInt(match[1], 10)
+            const bbox = {
+              left: parseFloat(match[2]),
+              top: parseFloat(match[3]),
+              right: parseFloat(match[4]),
+              bottom: parseFloat(match[5]),
+            }
 
-          if (idx >= 0 && idx < urls.length) {
-            console.log(`[thumb] character at image ${idx}, bbox: ${JSON.stringify(bbox)}`)
-            try {
-              characterRef = await cropAndRemoveBackground(images[idx], urls[idx], bbox)
-              bgRemoved = true
-              console.log(`[thumb] crop+rembg success, size: ${characterRef.data.length}`)
-            } catch (e) {
-              console.log(`[thumb] crop+rembg failed: ${e}, falling back to raw crop`)
+            if (idx >= 0 && idx < urls.length) {
+              console.log(`[thumb] character at image ${idx}, bbox: ${JSON.stringify(bbox)}`)
               try {
-                const cropped = await cropBase64(images[idx], bbox)
-                characterRef = { data: cropped.toString('base64'), mimeType: 'image/jpeg' }
-              } catch {
-                characterRef = { data: images[idx], mimeType: 'image/jpeg' }
+                characterRef = await cropAndRemoveBackground(images[idx], urls[idx], bbox)
+                bgRemoved = true
+                console.log(`[thumb] crop+rembg success, size: ${characterRef.data.length}`)
+              } catch (e) {
+                console.log(`[thumb] crop+rembg failed: ${e}, falling back to raw crop`)
+                try {
+                  const cropped = await cropBase64(images[idx], bbox)
+                  characterRef = { data: cropped.toString('base64'), mimeType: 'image/jpeg' }
+                } catch {
+                  characterRef = { data: images[idx], mimeType: 'image/jpeg' }
+                }
               }
             }
+          } else {
+            console.log(`[thumb] bbox parse failed for: "${refPart}"`)
+            if (images.length > 0) characterRef = { data: images[0], mimeType: 'image/jpeg' }
           }
-        } else {
-          console.log(`[thumb] bbox parse failed for: "${refPart}"`)
-          // Fallback: no bbox, use first image raw
-          if (images.length > 0) characterRef = { data: images[0], mimeType: 'image/jpeg' }
         }
+      } catch (e) {
+        console.log(`[thumb] detection failed: ${e}, skipping character ref`)
       }
     }
 
