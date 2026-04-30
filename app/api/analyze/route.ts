@@ -10,7 +10,6 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const YT_KEY = process.env.YOUTUBE_API_KEY
 const YT = 'https://www.googleapis.com/youtube/v3'
 
-// Resolve channel ID from various URL formats
 async function resolveChannelId(url: string): Promise<{ id: string; name: string; subs: string; avatar?: string }> {
   let handle: string | null = null
   let channelId: string | null = null
@@ -29,11 +28,9 @@ async function resolveChannelId(url: string): Promise<{ id: string; name: string
     } else if (path.startsWith('/user/')) {
       username = path.split('/user/')[1].split('/')[0]
     } else if (path.length > 1) {
-      // bare path like /mkbhd
       username = path.slice(1).split('/')[0]
     }
   } catch {
-    // treat as bare handle
     handle = url.replace('@', '')
   }
 
@@ -49,6 +46,7 @@ async function resolveChannelId(url: string): Promise<{ id: string; name: string
   const res = await fetch(apiUrl)
   const data = await res.json()
 
+  if (data.error) throw new Error(`YouTube API error: ${data.error.message ?? 'unknown error'}`)
   if (!data.items?.length) throw new Error('Channel not found. Make sure the URL is a valid public YouTube channel.')
 
   const channel = data.items[0]
@@ -59,26 +57,21 @@ async function resolveChannelId(url: string): Promise<{ id: string; name: string
     ? `${(subs / 1000).toFixed(1)}K`
     : String(subs)
 
-  const thumbs = channel.snippet.thumbnails
+  const thumbs = channel.snippet?.thumbnails
   const avatar: string | undefined =
     thumbs?.high?.url ?? thumbs?.medium?.url ?? thumbs?.default?.url ?? undefined
 
-  return {
-    id: channel.id,
-    name: channel.snippet.title,
-    subs: subsFormatted,
-    avatar,
-  }
+  return { id: channel.id, name: channel.snippet.title, subs: subsFormatted, avatar }
 }
 
-// Get uploads playlist ID for a channel
 async function getUploadsPlaylistId(channelId: string): Promise<string> {
   const res = await fetch(`${YT}/channels?part=contentDetails&id=${channelId}&key=${YT_KEY}`)
   const data = await res.json()
-  return data.items[0].contentDetails.relatedPlaylists.uploads
+  const uploadsId = data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads
+  if (!uploadsId) throw new Error('This channel has no public uploads.')
+  return uploadsId
 }
 
-// Fetch video IDs from playlist (up to 50)
 async function getPlaylistVideoIds(playlistId: string): Promise<string[]> {
   const res = await fetch(`${YT}/playlistItems?part=contentDetails&playlistId=${playlistId}&maxResults=50&key=${YT_KEY}`)
   const data = await res.json()
@@ -93,9 +86,8 @@ interface VideoStats {
   description: string
 }
 
-// Get stats for videos and return top 10 by views
 async function getTopVideos(videoIds: string[]): Promise<VideoStats[]> {
-  if (!videoIds.length) throw new Error('No videos found on this channel.')
+  if (!videoIds.length) throw new Error('No public videos found on this channel.')
   const ids = videoIds.slice(0, 50).join(',')
   const res = await fetch(`${YT}/videos?part=snippet,statistics&id=${ids}&key=${YT_KEY}`)
   const data = await res.json()
@@ -103,19 +95,19 @@ async function getTopVideos(videoIds: string[]): Promise<VideoStats[]> {
   const videos: VideoStats[] = (data.items || []).map((v: {
     id: string
     snippet: { title: string; description: string }
-    statistics: { viewCount?: string; likeCount?: string }
+    statistics?: { viewCount?: string; likeCount?: string }
   }) => ({
     id: v.id,
     title: v.snippet.title,
-    views: parseInt(v.statistics.viewCount || '0'),
-    likes: parseInt(v.statistics.likeCount || '0'),
-    description: v.snippet.description.slice(0, 200),
+    views: parseInt(v.statistics?.viewCount || '0'),
+    likes: parseInt(v.statistics?.likeCount || '0'),
+    description: v.snippet.description?.slice(0, 200) ?? '',
   }))
 
+  if (!videos.length) throw new Error('No public videos found on this channel.')
   return videos.sort((a, b) => b.views - a.views).slice(0, 10)
 }
 
-// Call Claude to generate 5 video ideas
 async function fetchBase64(url: string): Promise<string | null> {
   try {
     const res = await fetch(url)
@@ -156,9 +148,18 @@ Be specific and descriptive. Do not mention any people, faces, or expressions. W
       max_tokens: 400,
       messages: [{ role: 'user', content }],
     })
-    return msg.content[0].type === 'text' ? msg.content[0].text.trim() : ''
+    return msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : ''
   } catch {
     return ''
+  }
+}
+
+function extractJSON(text: string): object | null {
+  try {
+    const match = text.match(/\{[\s\S]*\}/)
+    return match ? JSON.parse(match[0]) : null
+  } catch {
+    return null
   }
 }
 
@@ -171,13 +172,29 @@ async function generateIdeas(channelName: string, videos: VideoStats[], thumbnai
 
 Always respond with valid JSON only - no markdown, no extra text.`
 
-  const imageNote = thumbnailImages.length > 0
-    ? `The attached images are the top-performing thumbnails from this channel. Study their visual style carefully: color palette, composition, text treatment, lighting, mood, and energy. The thumbnailConcept for each idea must match and build on this established visual style.`
-    : ''
-
   const userText = `Channel: ${channelName}
 
-${imageNote}
+Top performing videos:
+${videoList}
+
+Analyze the patterns in these top videos and generate exactly 5 new video ideas ranked by predicted performance (rank 1 = highest potential).
+
+Respond with this exact JSON structure:
+{
+  "ideas": [
+    {
+      "rank": 1,
+      "title": "exact video title optimized for clicks and search — no hashtags, no emojis",
+      "performanceReason": "2-3 sentence explanation of why this will perform based on the channel's proven patterns",
+      "thumbnailConcept": "Visual brief rooted in this channel's thumbnail style. Do NOT describe any person, face, expression, or body pose. Describe only: the setting and background, dominant color palette, lighting style, emotional energy, and how the title text appears (position, weight, color). Be specific and cinematic."
+    }
+  ]
+}`
+
+  const userTextWithImages = thumbnailImages.length > 0
+    ? `Channel: ${channelName}
+
+The attached images are the top-performing thumbnails from this channel. Study their visual style carefully: color palette, composition, text treatment, lighting, mood, and energy. The thumbnailConcept for each idea must match and build on this established visual style.
 
 Top performing videos:
 ${videoList}
@@ -195,25 +212,41 @@ Respond with this exact JSON structure:
     }
   ]
 }`
+    : userText
 
-  const userContent: Anthropic.MessageParam['content'] = [
+  const contentWithImages: Anthropic.MessageParam['content'] = [
     ...thumbnailImages.map(data => ({
       type: 'image' as const,
       source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data },
     })),
+    { type: 'text' as const, text: userTextWithImages },
+  ]
+
+  const contentTextOnly: Anthropic.MessageParam['content'] = [
     { type: 'text' as const, text: userText },
   ]
 
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
-    system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-    messages: [{ role: 'user', content: userContent }],
-  })
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
-  const match = text.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('Analysis failed — please try again.')
-  return JSON.parse(match[0])
+  async function callClaude(content: Anthropic.MessageParam['content']): Promise<object | null> {
+    try {
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content }],
+      })
+      const text = message.content[0]?.type === 'text' ? message.content[0].text : ''
+      return extractJSON(text)
+    } catch {
+      return null
+    }
+  }
+
+  // Try with images first; fall back to text-only on any failure
+  const result = (thumbnailImages.length > 0 ? await callClaude(contentWithImages) : null)
+    ?? await callClaude(contentTextOnly)
+
+  if (!result) throw new Error('Analysis failed — please try again.')
+  return result
 }
 
 export async function POST(request: Request) {
@@ -258,7 +291,7 @@ export async function POST(request: Request) {
       channelAvatar: channel.avatar,
       faceRefs,
       thumbnailStyle,
-      ideas: analysis.ideas,
+      ideas: (analysis as { ideas: unknown[] }).ideas,
     })
 
     if (!isPro) {
