@@ -86,6 +86,26 @@ async function cropAndRemoveBackground(
   return { data: cropped.toString('base64'), mimeType: 'image/jpeg' }
 }
 
+async function resolveBackground(title: string, channelName?: string): Promise<string> {
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 30,
+      system: 'You output ONLY a short background descriptor phrase (2-5 words). No punctuation, no explanation.',
+      messages: [{
+        role: 'user',
+        content: `Video title: "${title}"${channelName ? `\nChannel: "${channelName}"` : ''}
+
+What specific background environment should a YouTube thumbnail use? Examples: "Rainbow Six Siege operator", "Fortnite battle royale", "Minecraft survival", "dark urban street", "gym workout studio". Output the phrase only.`,
+      }],
+    })
+    const text = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : ''
+    return text
+  } catch {
+    return ''
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { title, faceRefs, thumbnailStyle, channelName } = await request.json()
@@ -193,13 +213,15 @@ no`,
       }
     }
 
-    const channelCtx = channelName ? ` This video is from the channel "${channelName}" — use that context to infer the correct game, franchise, or topic for the background scene.` : ''
+    // Resolve the specific background environment from title + channel
+    const backgroundContext = await resolveBackground(title, channelName)
+    const bgPhrase = backgroundContext ? ` Use a ${backgroundContext} background.` : ''
 
     let imagePrompt: string
     if (characterRef) {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${channelCtx}${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.${bgPhrase}${styleHint ? ` Style: ${styleHint}` : ''}`
     } else {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${channelCtx}${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.${bgPhrase}${styleHint ? ` Style: ${styleHint}` : ''}`
     }
 
     console.log(`[thumb] identityType: ${identityType}, hasRef: ${!!characterRef}, bgRemoved: ${bgRemoved}`)
