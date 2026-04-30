@@ -201,23 +201,27 @@ Respond with this exact JSON structure:
     { type: 'text' as const, text: userText },
   ]
 
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2000,
-    system: [
-      {
-        type: 'text',
-        text: systemPrompt,
-        cache_control: { type: 'ephemeral' },
-      },
-    ],
-    messages: [{ role: 'user', content: userContent }],
-  })
+  async function attempt(content: Anthropic.MessageParam['content']) {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content }],
+    })
+    const text = message.content[0].type === 'text' ? message.content[0].text : ''
+    console.log('[analyze] model response (first 200):', text.slice(0, 200))
+    const match = text.match(/\{[\s\S]*\}/)
+    return match ? JSON.parse(match[0]) : null
+  }
 
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
-  const match = text.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('No JSON found in model response')
-  return JSON.parse(match[0])
+  // Try with images first; if no JSON comes back, retry text-only
+  let result = await attempt(userContent)
+  if (!result && thumbnailImages.length > 0) {
+    console.log('[analyze] retrying without images')
+    result = await attempt([{ type: 'text' as const, text: userText }])
+  }
+  if (!result) throw new Error('Analysis failed — please try again.')
+  return result
 }
 
 export async function POST(request: Request) {
