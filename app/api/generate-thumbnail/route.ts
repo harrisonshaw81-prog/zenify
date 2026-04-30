@@ -195,9 +195,9 @@ no`,
 
     let imagePrompt: string
     if (characterRef) {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${styleHint ? ` Style: ${styleHint}` : ''}`
     } else {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets. The background scene must match the video topic — if it's a specific game, show that game's environment; if it's a specific topic, reflect it in the scene.${styleHint ? ` Style: ${styleHint}` : ''}`
     }
 
     console.log(`[thumb] identityType: ${identityType}, hasRef: ${!!characterRef}, bgRemoved: ${bgRemoved}`)
