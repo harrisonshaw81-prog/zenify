@@ -181,6 +181,7 @@ Analyze the patterns in these top videos and generate exactly 5 new video ideas 
 
 Respond with this exact JSON structure:
 {
+  "channelTopic": "the main topic, game, or niche of this channel in 1-4 words (e.g. Rainbow Six Siege, Fortnite, cooking, travel, fitness, finance)",
   "ideas": [
     {
       "rank": 1,
@@ -203,6 +204,7 @@ Analyze the patterns in these top videos and generate exactly 5 new video ideas 
 
 Respond with this exact JSON structure:
 {
+  "channelTopic": "the main topic, game, or niche of this channel in 1-4 words (e.g. Rainbow Six Siege, Fortnite, cooking, travel, fitness, finance)",
   "ideas": [
     {
       "rank": 1,
@@ -291,6 +293,7 @@ export async function POST(request: Request) {
       channelAvatar: channel.avatar,
       faceRefs,
       thumbnailStyle,
+      channelTopic: (analysis as { channelTopic?: string }).channelTopic ?? '',
       ideas: (analysis as { ideas: unknown[] }).ideas,
     })
 

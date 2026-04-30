@@ -18,6 +18,7 @@ interface AnalysisResult {
   channelAvatar?: string
   faceRefs?: string[]
   thumbnailStyle?: string
+  channelTopic?: string
   ideas: VideoIdea[]
 }
 
@@ -184,7 +185,7 @@ export default function Analyzer({ isPro = false }: { isPro?: boolean }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {result.ideas.map((idea, i) => (
-              <IdeaCard key={i} idea={idea} index={i} isPro={isPro} faceRefs={result.faceRefs} thumbnailStyle={result.thumbnailStyle} channelName={result.channelName} />
+              <IdeaCard key={i} idea={idea} index={i} isPro={isPro} faceRefs={result.faceRefs} thumbnailStyle={result.thumbnailStyle} channelName={result.channelName} channelTopic={result.channelTopic} />
             ))}
           </div>
 
@@ -213,7 +214,7 @@ export default function Analyzer({ isPro = false }: { isPro?: boolean }) {
   )
 }
 
-function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle, channelName }: { idea: VideoIdea; index: number; isPro: boolean; faceRefs?: string[]; thumbnailStyle?: string; channelName?: string }) {
+function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle, channelName, channelTopic }: { idea: VideoIdea; index: number; isPro: boolean; faceRefs?: string[]; thumbnailStyle?: string; channelName?: string; channelTopic?: string }) {
   const isLocked = index > 0 && !isPro
   const [thumbState, setThumbState] = useState<'idle' | 'loading' | 'done' | 'error' | 'pro_required'>('idle')
   const [thumbUrl, setThumbUrl] = useState<string | null>(null)
@@ -230,7 +231,7 @@ function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle, channelName }:
         method: 'POST',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: idea.title, faceRefs, thumbnailStyle, channelName, _t: Date.now() }),
+        body: JSON.stringify({ title: idea.title, faceRefs, thumbnailStyle, channelName, channelTopic, _t: Date.now() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')

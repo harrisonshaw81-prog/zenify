@@ -86,29 +86,9 @@ async function cropAndRemoveBackground(
   return { data: cropped.toString('base64'), mimeType: 'image/jpeg' }
 }
 
-async function resolveBackground(title: string, channelName?: string): Promise<string> {
-  try {
-    const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 20,
-      system: 'Output ONLY the topic name. 1-4 words. No punctuation, no explanation.',
-      messages: [{
-        role: 'user',
-        content: `Video title: "${title}"${channelName ? `\nChannel: "${channelName}"` : ''}
-
-What is the topic or game this video is about? Examples: "Rainbow Six Siege", "Fortnite", "Minecraft", "cooking", "travel", "fitness", "finance". Output the topic only.`,
-      }],
-    })
-    const text = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : ''
-    return text
-  } catch {
-    return ''
-  }
-}
-
 export async function POST(request: Request) {
   try {
-    const { title, faceRefs, thumbnailStyle, channelName } = await request.json()
+    const { title, faceRefs, thumbnailStyle, channelTopic } = await request.json()
     if (!title) return Response.json({ error: 'title is required' }, { status: 400 })
 
     // One-liner style hint — strip headers, quoted examples, and bullet syntax
@@ -213,9 +193,7 @@ no`,
       }
     }
 
-    // Resolve the topic from title + channel, then build a clean background phrase
-    const topic = await resolveBackground(title, channelName)
-    const bgLine = topic ? ` Use a ${topic} background for the thumbnail.` : ''
+    const bgLine = channelTopic ? ` Use a ${channelTopic} background for the thumbnail.` : ''
 
     let imagePrompt: string
     if (characterRef) {
