@@ -275,7 +275,8 @@ export async function POST(request: Request) {
 
     return response
   } catch (err) {
-    const message = 'Something went wrong, please try again.'
+    const message = err instanceof Error ? err.message : 'Something went wrong, please try again.'
+    console.error('[analyze]', err)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
