@@ -150,13 +150,16 @@ Be specific and descriptive. Do not mention any people, faces, or expressions. W
     },
   ]
 
-  const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 400,
-    messages: [{ role: 'user', content }],
-  })
-
-  return msg.content[0].type === 'text' ? msg.content[0].text.trim() : ''
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      messages: [{ role: 'user', content }],
+    })
+    return msg.content[0].type === 'text' ? msg.content[0].text.trim() : ''
+  } catch {
+    return ''
+  }
 }
 
 async function generateIdeas(channelName: string, videos: VideoStats[], thumbnailImages: string[]) {
