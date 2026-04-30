@@ -8,9 +8,19 @@ export default function CheckoutButton({ style }: { style?: React.CSSProperties 
 
   async function handleClick() {
     setLoading(true)
-    const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-    const { url } = await res.json()
-    window.location.href = url
+    try {
+      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        alert(data.error || 'Something went wrong. Please try again.')
+        setLoading(false)
+      }
+    } catch {
+      alert('Something went wrong. Please try again.')
+      setLoading(false)
+    }
   }
 
   return (
