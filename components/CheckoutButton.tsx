@@ -1,10 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TiltCard } from '@/components/ui/tilt-card'
 
 export default function CheckoutButton({ style }: { style?: React.CSSProperties }) {
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const reset = () => setLoading(false)
+    window.addEventListener('pageshow', reset)
+    return () => window.removeEventListener('pageshow', reset)
+  }, [])
 
   async function handleClick() {
     setLoading(true)
