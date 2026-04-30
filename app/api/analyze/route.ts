@@ -204,37 +204,16 @@ Respond with this exact JSON structure:
     { type: 'text' as const, text: userText },
   ]
 
-  const PREFILL = '{"ideas":['
-
-  async function attempt(content: Anthropic.MessageParam['content']) {
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 3000,
-      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      messages: [
-        { role: 'user', content },
-        { role: 'assistant', content: PREFILL },
-      ],
-    })
-    const completion = message.content[0].type === 'text' ? message.content[0].text : ''
-    const full = PREFILL + completion
-    console.log('[analyze] prefilled response (first 300):', full.slice(0, 300))
-    try {
-      return JSON.parse(full)
-    } catch {
-      const match = full.match(/\{[\s\S]*\}/)
-      return match ? JSON.parse(match[0]) : null
-    }
-  }
-
-  // Try with images first; if it fails, retry text-only
-  let result = await attempt(userContent)
-  if (!result && thumbnailImages.length > 0) {
-    console.log('[analyze] retrying without images')
-    result = await attempt([{ type: 'text' as const, text: userText }])
-  }
-  if (!result) throw new Error('Analysis failed — please try again.')
-  return result
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 2000,
+    system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: userContent }],
+  })
+  const text = message.content[0].type === 'text' ? message.content[0].text : ''
+  const match = text.match(/\{[\s\S]*\}/)
+  if (!match) throw new Error('Analysis failed — please try again.')
+  return JSON.parse(match[0])
 }
 
 export async function POST(request: Request) {
