@@ -43,11 +43,13 @@ function Navbar({ isPro }: { isPro: boolean }) {
         <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>
           Zen<span style={{ color: 'var(--accent)' }}>ify</span>
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
-          <a href="#features" className="nav-link">Features</a>
-          <a href="#how-it-works" className="nav-link">How it Works</a>
-          <a href="#pricing" className="nav-link">Pricing</a>
-          {!isPro && <RestoreAccessButton />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32, marginRight: 16 }}>
+            <a href="#features" className="nav-link">Features</a>
+            <a href="#how-it-works" className="nav-link">How it Works</a>
+            <a href="#pricing" className="nav-link">Pricing</a>
+            {!isPro && <RestoreAccessButton />}
+          </div>
           {!isPro && <CheckoutButton style={{
             fontSize: 14, fontWeight: 600, color: 'var(--bg)', background: 'var(--accent)',
             padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
@@ -67,7 +69,7 @@ function Hero({ isPro }: { isPro: boolean }) {
         background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.15) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
-      <div style={{
+      <div className="hero-grid" style={{
         maxWidth: 1120, margin: '0 auto', padding: '0 24px',
         display: 'grid', gridTemplateColumns: '1fr 1fr',
         gap: 64, alignItems: 'center',
@@ -103,18 +105,11 @@ function Hero({ isPro }: { isPro: boolean }) {
         </div>
 
         {/* Right: 3D product mockup */}
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+        <div className="hero-mockup" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
           <ProductMockup />
         </div>
       </div>
 
-      {/* Mobile stack override */}
-      <style>{`
-        @media (max-width: 768px) {
-          .hero-grid { grid-template-columns: 1fr !important; }
-          .hero-mockup { display: none !important; }
-        }
-      `}</style>
     </section>
   )
 }
@@ -286,9 +281,9 @@ function HowItWorks() {
         </div>
 
         {/* Steps */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, position: 'relative' }}>
+        <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0, position: 'relative' }}>
           {/* Connector line between steps */}
-          <div style={{
+          <div className="steps-connector" style={{
             position: 'absolute', top: 26, left: 'calc(16.67% + 26px)', right: 'calc(16.67% + 26px)',
             height: 1, background: 'linear-gradient(to right, rgba(139,92,246,0.5), rgba(139,92,246,0.5))',
             zIndex: 0,

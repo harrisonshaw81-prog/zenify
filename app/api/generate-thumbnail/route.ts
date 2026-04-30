@@ -192,21 +192,18 @@ no`,
       }
     }
 
-    const isRealPerson = /^person$/i.test((identityType ?? '').trim())
-
     let imagePrompt: string
-    if (identityType && characterRef) {
-      const subject = isRealPerson ? 'person' : 'character'
-      imagePrompt = `Place this ${subject} in a YouTube thumbnail for the video: "${title}". Do not change the ${subject} in any way. Directly place them into the thumbnail as is. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.${styleHint ? ` Style: ${styleHint}` : ''}`
+    if (characterRef) {
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.${styleHint ? ` Style: ${styleHint}` : ''}`
     } else {
-      imagePrompt = `Create a YouTube thumbnail for the video: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.${styleHint ? ` Style: ${styleHint}` : ''}`
     }
 
     console.log(`[thumb] identityType: ${identityType}, hasRef: ${!!characterRef}, bgRemoved: ${bgRemoved}`)
     console.log(`[thumb] prompt: ${imagePrompt}`)
 
     const parts: object[] = []
-    if (identityType && characterRef) {
+    if (characterRef) {
       parts.push({ inlineData: { mimeType: characterRef.mimeType, data: characterRef.data } })
       parts.push({ text: imagePrompt })
     } else {
@@ -228,13 +225,18 @@ no`,
 
     if (!imageData) return Response.json({ error: 'No image returned from model' }, { status: 500 })
 
-    return Response.json({
+    return new Response(JSON.stringify({
       imageUrl: `data:${imageData.mimeType};base64,${imageData.data}`,
       _debug: {
         identityType,
         bgRemoved,
         refSize: characterRef ? Math.round(characterRef.data.length / 1024) + 'KB' : null,
         prompt: imagePrompt,
+      },
+    }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
       },
     })
   } catch (err) {

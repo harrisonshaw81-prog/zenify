@@ -71,3 +71,22 @@ body {
   0%   { transform: translate(0, 0) scale(1.5); opacity: 1; }
   100% { transform: translate(var(--spark-x), var(--spark-y)) scale(0); opacity: 0; }
 }
+
+@media (max-width: 768px) {
+  .nav-links { display: none !important; }
+
+  .hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .hero-mockup { display: none !important; }
+
+  .steps-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .steps-connector { display: none !important; }
+
+  .analyzer-input-row { flex-direction: column !important; }
+  .analyzer-input-row > * { width: 100% !important; display: block !important; }
+  .analyzer-input-row input { width: 100% !important; }
+
+  .result-header { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+  .result-header button { align-self: flex-start; }
+
+  .thumb-pro-row { flex-direction: column !important; align-items: flex-start !important; }
+}

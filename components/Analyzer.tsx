@@ -81,7 +81,7 @@ export default function Analyzer({ isPro = false }: { isPro?: boolean }) {
         .aurora-input:focus { box-shadow: 0 0 0 2px rgba(196,181,253,0.8), 0 0 36px rgba(139,92,246,0.35) !important; animation-play-state: paused; }
       `}</style>
       {/* Input row */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+      <div className="analyzer-input-row" style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
         <input
           type="text"
           value={url}
@@ -162,7 +162,7 @@ export default function Analyzer({ isPro = false }: { isPro?: boolean }) {
       {/* Results */}
       {result && !loading && (
         <div style={{ textAlign: 'left', marginTop: 8 }}>
-          <div style={{ marginBottom: 28, padding: '16px 20px', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="result-header" style={{ marginBottom: 28, padding: '16px 20px', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Analyzing</p>
               <p style={{ fontSize: 16, fontWeight: 700 }}>{result.channelName}</p>
@@ -228,8 +228,9 @@ function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle }: { idea: Vide
     try {
       const res = await fetch('/api/generate-thumbnail', {
         method: 'POST',
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: idea.title, faceRefs, thumbnailStyle }),
+        body: JSON.stringify({ title: idea.title, faceRefs, thumbnailStyle, _t: Date.now() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
