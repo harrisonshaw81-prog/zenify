@@ -88,22 +88,10 @@ async function cropAndRemoveBackground(
 
 export async function POST(request: Request) {
   try {
-    const { title, faceRefs, thumbnailStyle, channelTopic } = await request.json()
+    const { title, faceRefs, channelTopic } = await request.json()
     if (!title) return Response.json({ error: 'title is required' }, { status: 400 })
 
     // One-liner style hint — strip headers, quoted examples, and bullet syntax
-    const styleHint = thumbnailStyle
-      ? thumbnailStyle
-          .replace(/#+.*\n/g, '')           // remove markdown headers
-          .replace(/"[^"]*"/g, '')           // remove quoted text (example phrases)
-          .replace(/\*\*|\*/g, '')           // remove bold/italic markers
-          .replace(/[-•]\s+/g, '')           // remove bullet points
-          .trim()
-          .split('\n')
-          .find((l: string) => l.trim().length > 20)
-          ?.trim() ?? ''
-      : ''
-
     const allUrls: string[] = Array.isArray(faceRefs) ? faceRefs.slice(0, 8) : []
     const fetchResults = await Promise.all(allUrls.map(async (url) => {
       const data = await fetchBase64(url)
@@ -197,9 +185,9 @@ no`,
 
     let imagePrompt: string
     if (characterRef) {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.${bgLine}${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.${bgLine}`
     } else {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.${bgLine}${styleHint ? ` Style: ${styleHint}` : ''}`
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.${bgLine}`
     }
 
     console.log(`[thumb] identityType: ${identityType}, hasRef: ${!!characterRef}, bgRemoved: ${bgRemoved}`)
