@@ -26,7 +26,7 @@ export default function TermsPage() {
         </Section>
 
         <Section title="Pro Subscription">
-          Pro subscriptions are billed monthly via Stripe. You may cancel at any time. Cancellation takes effect at the end of your current billing period. We do not offer refunds for partial billing periods.
+          Pro subscriptions are available on a monthly ($19/month) or annual ($180/year) billing cycle via Stripe. Pro includes up to 25 AI thumbnail generations per calendar month; unused generations do not roll over. You may cancel at any time. Cancellation takes effect at the end of your current billing period. We do not offer refunds for partial billing periods.
         </Section>
 
         <Section title="AI-Generated Content">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { TiltCard } from '@/components/ui/tilt-card'
 
-export default function CheckoutButton({ style }: { style?: React.CSSProperties }) {
+export default function CheckoutButton({ style, plan = 'monthly', label }: { style?: React.CSSProperties; plan?: 'monthly' | 'annual'; label?: string }) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -15,7 +15,11 @@ export default function CheckoutButton({ style }: { style?: React.CSSProperties 
   async function handleClick() {
     setLoading(true)
     try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      })
       const data = await res.json()
       if (data.url) {
         window.location.href = data.url
@@ -29,6 +33,8 @@ export default function CheckoutButton({ style }: { style?: React.CSSProperties 
     }
   }
 
+  const defaultLabel = plan === 'annual' ? 'Get Pro - $180/year' : 'Get Pro - $19/month'
+
   return (
     <TiltCard
       sparkle
@@ -41,7 +47,7 @@ export default function CheckoutButton({ style }: { style?: React.CSSProperties 
       }}
     >
       <button onClick={handleClick} disabled={loading} style={style}>
-        {loading ? 'Redirecting…' : 'Get Pro - $19/month'}
+        {loading ? 'Redirecting…' : (label ?? defaultLabel)}
       </button>
     </TiltCard>
   )

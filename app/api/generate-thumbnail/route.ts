@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import sharp from 'sharp'
 import { cookies } from 'next/headers'
 import { verifyProCookie, COOKIE_NAME } from '@/lib/pro-cookie'
+import { signThumbCookie, verifyThumbCookie, THUMB_COOKIE_NAME, THUMB_MONTHLY_LIMIT } from '@/lib/thumb-usage'
 
 export const maxDuration = 60
 
@@ -93,6 +94,14 @@ export async function POST(request: Request) {
     const cookieStore = await cookies()
     const isPro = verifyProCookie(cookieStore.get(COOKIE_NAME)?.value)
     if (!isPro) return Response.json({ error: 'pro_required' }, { status: 403 })
+
+    const now = new Date()
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const existing = verifyThumbCookie(cookieStore.get(THUMB_COOKIE_NAME)?.value)
+    const thumbCount = existing?.month === currentMonth ? existing.count : 0
+    if (thumbCount >= THUMB_MONTHLY_LIMIT) {
+      return Response.json({ error: 'thumb_limit_reached', message: `You've used all ${THUMB_MONTHLY_LIMIT} thumbnail generations for this month. Resets on the 1st.` }, { status: 429 })
+    }
 
     const { title, faceRefs, channelTopic } = await request.json()
     if (!title) return Response.json({ error: 'title is required' }, { status: 400 })
@@ -213,6 +222,14 @@ no`,
     const imageData = responseParts.find(p => p.inlineData)?.inlineData ?? null
 
     if (!imageData) return Response.json({ error: 'No image returned from model' }, { status: 500 })
+
+    cookieStore.set(THUMB_COOKIE_NAME, signThumbCookie(thumbCount + 1, currentMonth), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 366 * 24 * 60 * 60,
+      path: '/',
+    })
 
     return new Response(JSON.stringify({
       imageUrl: `data:${imageData.mimeType};base64,${imageData.data}`,

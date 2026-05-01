@@ -6,6 +6,7 @@ import StarBackground from '@/components/ui/star-background'
 import { TiltCard } from '@/components/ui/tilt-card'
 import RestoreAccessButton from '@/components/RestoreAccessButton'
 import ManageSubscriptionButton from '@/components/ManageSubscriptionButton'
+import PricingToggle from '@/components/PricingToggle'
 import ProductMockup from '@/components/ui/product-mockup'
 import AnalyzerCard from '@/components/AnalyzerCard'
 
@@ -458,7 +459,7 @@ function Pricing({ isPro }: { isPro: boolean }) {
           price="$19"
           period="/month"
           description="Full access for serious creators"
-          features={['All 5 ranked video ideas', 'Full titles + thumbnail concepts', 'Performance prediction reasoning', 'Unlimited channel analyses', 'Priority support']}
+          features={['All 5 ranked video ideas', 'Full titles + thumbnail concepts', '25 AI thumbnails per month', 'Unlimited channel analyses', 'Priority support']}
           cta="Get Pro"
           accent={true}
         />
@@ -509,7 +510,7 @@ function PricingCard({ name, price, period, description, features, cta, accent }
         ))}
       </ul>
       {accent ? (
-        <CheckoutButton style={{
+        <PricingToggle buttonStyle={{
           width: '100%', padding: '13px 0', borderRadius: 10, fontWeight: 700, fontSize: 15,
           background: 'var(--accent)', color: 'var(--bg)', border: '1px solid var(--accent)',
           cursor: 'pointer', fontFamily: 'inherit',

@@ -216,7 +216,7 @@ export default function Analyzer({ isPro = false }: { isPro?: boolean }) {
 
 function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle, channelName, channelTopic }: { idea: VideoIdea; index: number; isPro: boolean; faceRefs?: string[]; thumbnailStyle?: string; channelName?: string; channelTopic?: string }) {
   const isLocked = index > 0 && !isPro
-  const [thumbState, setThumbState] = useState<'idle' | 'loading' | 'done' | 'error' | 'pro_required'>('idle')
+  const [thumbState, setThumbState] = useState<'idle' | 'loading' | 'done' | 'error' | 'pro_required' | 'limit_reached'>('idle')
   const [thumbUrl, setThumbUrl] = useState<string | null>(null)
   const [thumbError, setThumbError] = useState<string | null>(null)
   const [thumbDebug, setThumbDebug] = useState<Record<string, unknown> | null>(null)
@@ -234,6 +234,10 @@ function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle, channelName, c
         body: JSON.stringify({ title: idea.title, faceRefs, thumbnailStyle, channelName, channelTopic, _t: Date.now() }),
       })
       const data = await res.json()
+      if (res.status === 429 && data.error === 'thumb_limit_reached') {
+        setThumbState('limit_reached')
+        return
+      }
       if (!res.ok) throw new Error(data.error || 'Generation failed')
       setThumbUrl(data.imageUrl)
       setThumbDebug(data._debug ?? null)
@@ -324,6 +328,12 @@ function IdeaCard({ idea, index, isPro, faceRefs, thumbnailStyle, channelName, c
               </div>
             )}
 
+
+            {thumbState === 'limit_reached' && (
+              <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                Monthly thumbnail limit reached (25/month). Resets on the 1st.
+              </div>
+            )}
 
             {thumbState === 'error' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
