@@ -26,7 +26,7 @@ function BrowserChrome() {
         paddingLeft: 10, gap: 6,
       }}>
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT, opacity: 0.7 }} />
-        <span style={{ fontSize: 10, color: MUTED, fontFamily: 'monospace' }}>zenify.io</span>
+        <span style={{ fontSize: 10, color: MUTED, fontFamily: 'monospace' }}>hypectr.com</span>
       </div>
     </div>
   )
@@ -37,7 +37,7 @@ function Scene0() {
     <div style={{ padding: '28px 24px' }}>
       <div style={{ marginBottom: 24, textAlign: 'center' }}>
         <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '-0.3px', marginBottom: 6 }}>
-          Zen<span style={{ color: ACCENT }}>ify</span>
+          Hype<span style={{ color: ACCENT }}>CTR</span>
         </div>
         <div style={{ fontSize: 11, color: MUTED }}>Paste any YouTube channel URL</div>
       </div>

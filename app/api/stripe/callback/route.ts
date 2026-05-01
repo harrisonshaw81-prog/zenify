@@ -11,7 +11,13 @@ export async function GET(request: Request) {
 
   if (!sessionId) redirect('/?error=missing_session')
 
-  const session = await stripe.checkout.sessions.retrieve(sessionId!)
+  let session
+  try {
+    session = await stripe.checkout.sessions.retrieve(sessionId!)
+  } catch {
+    redirect('/?error=missing_session')
+  }
+
   if (session.payment_status !== 'paid' && session.status !== 'complete') {
     redirect('/?error=payment_incomplete')
   }

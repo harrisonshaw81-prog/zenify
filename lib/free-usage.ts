@@ -1,7 +1,7 @@
 import { createHmac } from 'crypto'
 
 const SECRET = process.env.COOKIE_SECRET!
-export const FREE_COOKIE_NAME = 'zenify_free'
+export const FREE_COOKIE_NAME = 'hypectr_free'
 export const FREE_DAILY_LIMIT = 3
 
 export function signFreeCookie(count: number, day: string): string {

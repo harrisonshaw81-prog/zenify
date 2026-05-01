@@ -1,6 +1,8 @@
 import { GoogleGenAI } from '@google/genai'
 import Anthropic from '@anthropic-ai/sdk'
 import sharp from 'sharp'
+import { cookies } from 'next/headers'
+import { verifyProCookie, COOKIE_NAME } from '@/lib/pro-cookie'
 
 export const maxDuration = 60
 
@@ -88,6 +90,10 @@ async function cropAndRemoveBackground(
 
 export async function POST(request: Request) {
   try {
+    const cookieStore = await cookies()
+    const isPro = verifyProCookie(cookieStore.get(COOKIE_NAME)?.value)
+    if (!isPro) return Response.json({ error: 'pro_required' }, { status: 403 })
+
     const { title, faceRefs, channelTopic } = await request.json()
     if (!title) return Response.json({ error: 'title is required' }, { status: 400 })
 
@@ -101,9 +107,7 @@ export async function POST(request: Request) {
     const urls = valid.map(r => r.url)
     const images = valid.map(r => r.data)
 
-    let identityType: string | null = null
     let characterRef: { data: string; mimeType: string } | null = null
-    let bgRemoved = false
 
     if (images.length >= 1) {
       try {
@@ -135,14 +139,11 @@ no`,
         })
 
         const rawAnswer = detectionMsg.content[0]?.type === 'text' ? detectionMsg.content[0].text.trim() : ''
-        console.log(`[thumb] detection: "${rawAnswer}"`)
 
         const yesLine = rawAnswer.split('\n').find(l => /^yes:/i.test(l.trim()))?.trim() ?? ''
 
         if (yesLine) {
           const parts = yesLine.split('|')
-          identityType = parts[0].replace(/^yes:\s*/i, '').trim()
-
           const refPart = (parts[1] ?? '').trim()
           const match = refPart.match(/^(\d+):(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)$/)
 
@@ -156,13 +157,10 @@ no`,
             }
 
             if (idx >= 0 && idx < urls.length) {
-              console.log(`[thumb] character at image ${idx}, bbox: ${JSON.stringify(bbox)}`)
               try {
                 characterRef = await cropAndRemoveBackground(images[idx], urls[idx], bbox)
-                bgRemoved = true
-                console.log(`[thumb] crop+rembg success, size: ${characterRef.data.length}`)
               } catch (e) {
-                console.log(`[thumb] crop+rembg failed: ${e}, falling back to raw crop`)
+                console.error(`[thumb] crop+rembg failed: ${e}, falling back to raw crop`)
                 try {
                   const cropped = await cropBase64(images[idx], bbox)
                   characterRef = { data: cropped.toString('base64'), mimeType: 'image/jpeg' }
@@ -172,26 +170,26 @@ no`,
               }
             }
           } else {
-            console.log(`[thumb] bbox parse failed for: "${refPart}"`)
             if (images.length > 0) characterRef = { data: images[0], mimeType: 'image/jpeg' }
           }
         }
       } catch (e) {
-        console.log(`[thumb] detection failed: ${e}, skipping character ref`)
+        console.error(`[thumb] detection failed: ${e}, skipping character ref`)
       }
     }
 
-    const bgLine = channelTopic ? ` Use a ${channelTopic} background for the thumbnail.` : ''
-
     let imagePrompt: string
     if (characterRef) {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.${bgLine}`
+      const bgInstruction = channelTopic
+        ? `The background must be a ${channelTopic} scene — use official in-game environments, maps, or visuals from ${channelTopic}. `
+        : ''
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". ${bgInstruction}Place the provided image into the thumbnail exactly as shown — do not alter it. Add bold punchy text — 3 to 5 words max. Single scene only, no corner insets.`
     } else {
-      imagePrompt = `Create a YouTube thumbnail for: "${title}". Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.${bgLine}`
+      const bgInstruction = channelTopic
+        ? `The background must be a ${channelTopic} scene — use official in-game environments, maps, or visuals from ${channelTopic}. `
+        : ''
+      imagePrompt = `Create a YouTube thumbnail for: "${title}". ${bgInstruction}Bold punchy text — 3 to 5 words max. Vibrant colors. Single scene only, no corner insets.`
     }
-
-    console.log(`[thumb] identityType: ${identityType}, hasRef: ${!!characterRef}, bgRemoved: ${bgRemoved}`)
-    console.log(`[thumb] prompt: ${imagePrompt}`)
 
     const parts: object[] = []
     if (characterRef) {
@@ -218,12 +216,6 @@ no`,
 
     return new Response(JSON.stringify({
       imageUrl: `data:${imageData.mimeType};base64,${imageData.data}`,
-      _debug: {
-        identityType,
-        bgRemoved,
-        refSize: characterRef ? Math.round(characterRef.data.length / 1024) + 'KB' : null,
-        prompt: imagePrompt,
-      },
     }), {
       headers: {
         'Content-Type': 'application/json',

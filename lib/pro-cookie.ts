@@ -1,7 +1,7 @@
 import { createHmac } from 'crypto'
 
 const SECRET = process.env.COOKIE_SECRET!
-export const COOKIE_NAME = 'zenify_pro'
+export const COOKIE_NAME = 'hypectr_pro'
 const EXPIRY_DAYS = 30
 
 export function signProCookie(): string {

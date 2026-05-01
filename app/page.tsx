@@ -8,14 +8,30 @@ import RestoreAccessButton from '@/components/RestoreAccessButton'
 import ProductMockup from '@/components/ui/product-mockup'
 import AnalyzerCard from '@/components/AnalyzerCard'
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ pro?: string; error?: string }> }) {
   const cookieStore = await cookies()
   const isPro = verifyProCookie(cookieStore.get(COOKIE_NAME)?.value)
+  const params = await searchParams
+  const showProSuccess = params.pro === '1'
+  const checkoutError = params.error
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', position: 'relative' }}>
       <StarBackground />
       <div style={{ position: 'relative', zIndex: 1 }}>
+      {showProSuccess && (
+        <div style={{ background: '#14532d', borderBottom: '1px solid #16a34a', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, fontSize: 14, fontWeight: 600, color: '#86efac' }}>
+          <span>✓ You&apos;re now on Pro — all 5 ideas and thumbnail generation are unlocked.</span>
+          <a href="/" style={{ color: '#86efac', opacity: 0.7, textDecoration: 'underline', fontWeight: 500 }}>Dismiss</a>
+        </div>
+      )}
+      {checkoutError && (
+        <div style={{ background: '#7f1d1d', borderBottom: '1px solid #dc2626', padding: '12px 24px', textAlign: 'center', fontSize: 14, fontWeight: 600, color: '#fca5a5' }}>
+          {checkoutError === 'payment_incomplete'
+            ? 'Payment could not be confirmed. Please try again or contact support.'
+            : 'Something went wrong during checkout. Please try again.'}
+        </div>
+      )}
       <Navbar isPro={isPro} />
       <Hero isPro={isPro} />
       <AnalyzerSection isPro={isPro} />
@@ -41,7 +57,7 @@ function Navbar({ isPro }: { isPro: boolean }) {
     }}>
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
         <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>
-          Zen<span style={{ color: 'var(--accent)' }}>ify</span>
+          Hype<span style={{ color: 'var(--accent)' }}>CTR</span>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32, marginRight: 16 }}>
@@ -92,10 +108,10 @@ function Hero({ isPro }: { isPro: boolean }) {
             <span style={{ color: 'var(--accent)' }}>Viral Video Ideas</span>
           </h1>
           <p style={{ fontSize: 17, color: 'var(--muted)', lineHeight: 1.7, fontWeight: 400 }}>
-            Paste any YouTube channel URL. Zenify analyses your top-performing videos and delivers 5 ranked ideas with performance predictions - complete with AI-generated thumbnails.
+            Paste any YouTube channel URL. HypeCTR analyses your top-performing videos and delivers 5 ranked ideas with performance predictions - complete with AI-generated thumbnails.
           </p>
           <div style={{ display: 'flex', gap: 36, marginTop: 32, flexWrap: 'wrap' }}>
-            {([['12,000+', 'channels analysed'], ['60,000+', 'ideas generated'], ['1,200+', 'creators trust Zenify']] as const).map(([val, label]) => (
+            {([['12,000+', 'channels analysed'], ['60,000+', 'ideas generated'], ['1,200+', 'creators trust HypeCTR']] as const).map(([val, label]) => (
               <div key={label}>
                 <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>{val}</div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3 }}>{label}</div>
@@ -219,7 +235,7 @@ function PainPoints() {
             Every creator hits these walls
           </h2>
           <p style={{ fontSize: 17, color: 'var(--muted)', maxWidth: 480, margin: '0 auto' }}>
-            Zenify was built to fix these exact problems - not paper over them.
+            HypeCTR was built to fix these exact problems - not paper over them.
           </p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
@@ -251,7 +267,7 @@ function HowItWorks() {
       n: '02',
       icon: '🔍',
       title: 'We Analyse Top Videos',
-      desc: "Zenify pulls your top-performing videos via the YouTube Data API and decodes the patterns that drive views.",
+      desc: "HypeCTR pulls your top-performing videos via the YouTube Data API and decodes the patterns that drive views.",
     },
     {
       n: '03',
@@ -359,22 +375,22 @@ function TestimonialCard({ t }: { t: TCard }) {
 
 function Testimonials() {
   const all: TCard[] = [
-    { type: 'face', avatar: '🧑🏻', avatarBg: '#1e1042', name: 'Marcus R.', handle: '@marcusbuilds', subs: '84K subs', quote: "Zenify gave me 5 ideas in 30 seconds that would've taken me an afternoon. Three hit the top 10% of my channel." },
+    { type: 'face', avatar: '🧑🏻', avatarBg: '#1e1042', name: 'Marcus R.', handle: '@marcusbuilds', subs: '84K subs', quote: "HypeCTR gave me 5 ideas in 30 seconds that would've taken me an afternoon. Three hit the top 10% of my channel." },
     { type: 'logo', avatar: 'SL', avatarBg: '#0d9488', name: 'Sophie L.', handle: '@sophielearns', subs: '210K subs', quote: "The thumbnail concepts alone are worth it. Paste the output to my designer and we're done in minutes." },
     { type: 'face', avatar: '👨🏾', avatarBg: '#0c2340', name: 'James T.', handle: '@jamestechreviews', subs: '47K subs', quote: "The analysis picked up a hook pattern in my top videos I hadn't noticed myself. Immediately actionable." },
     { type: 'logo', avatar: 'CM', avatarBg: '#f97316', name: 'Chris M.', handle: '@chrismoneytalks', subs: '156K subs', quote: "The ranked list is the best part. I know exactly which idea to execute first, no second-guessing." },
-    { type: 'face', avatar: '👩🏽', avatarBg: '#2a0e1f', name: 'Aisha N.', handle: '@aishalifts', subs: '22K subs', quote: "My last three videos all hit 50K+ views. Zenify changed the way I approach content planning entirely." },
+    { type: 'face', avatar: '👩🏽', avatarBg: '#2a0e1f', name: 'Aisha N.', handle: '@aishalifts', subs: '22K subs', quote: "My last three videos all hit 50K+ views. HypeCTR changed the way I approach content planning entirely." },
     { type: 'logo', avatar: 'TB', avatarBg: '#3b82f6', name: 'Tom B.', handle: '@tombuildsstuff', subs: '89K subs', quote: "I run it every Monday before planning the week. The workflow difference is massive." },
     { type: 'face', avatar: '👩🏻', avatarBg: '#1a1535', name: 'Lena S.', handle: '@lenastudio', subs: '44K subs', quote: "It found my hook formula before I did. That pattern recognition alone is worth the subscription." },
     { type: 'logo', avatar: 'RJ', avatarBg: '#be185d', name: 'Ryan J.', handle: '@ryanjourneys', subs: '302K subs', quote: "Saved me 3 hours of research per video. I tracked it. That's not marketing copy." },
-    { type: 'face', avatar: '🧑🏽', avatarBg: '#0f2818', name: 'Priya K.', handle: '@priyacooks', subs: '31K subs', quote: "Went from posting once a month to twice a week. The ideas never dry up with Zenify." },
+    { type: 'face', avatar: '🧑🏽', avatarBg: '#0f2818', name: 'Priya K.', handle: '@priyacooks', subs: '31K subs', quote: "Went from posting once a month to twice a week. The ideas never dry up with HypeCTR." },
     { type: 'logo', avatar: 'MW', avatarBg: '#7c3aed', name: 'Mei W.', handle: '@meiwanders', subs: '18K subs', quote: "As a new creator this gave me a roadmap I didn't know I needed. Wish I'd found it sooner." },
     { type: 'face', avatar: '👨🏻', avatarBg: '#1e1042', name: 'David P.', handle: '@davidspreneur', subs: '67K subs', quote: "I've tried other tools. None of them go this deep on actual channel data." },
     { type: 'logo', avatar: 'ZH', avatarBg: '#0f766e', name: 'Zara H.', handle: '@zarahealthtips', subs: '129K subs', quote: "The performance predictions are scary accurate. I trust them more than my own instincts now." },
     { type: 'face', avatar: '🧑🏿', avatarBg: '#0c2340', name: 'Noah C.', handle: '@noahcodes', subs: '11K subs', quote: "Worth every dollar just for the thumbnail concepts. I'd honestly pay twice." },
-    { type: 'logo', avatar: 'EB', avatarBg: '#b45309', name: 'Elena B.', handle: '@elenabeauty', subs: '241K subs', quote: "Zenify helped me find a niche angle I'd completely overlooked in my own channel for two years." },
+    { type: 'logo', avatar: 'EB', avatarBg: '#b45309', name: 'Elena B.', handle: '@elenabeauty', subs: '241K subs', quote: "HypeCTR helped me find a niche angle I'd completely overlooked in my own channel for two years." },
     { type: 'face', avatar: '👨🏽', avatarBg: '#2a0e1f', name: 'Sam K.', handle: '@samkitchen', subs: '78K subs', quote: "I analyze every channel I admire. It's like reverse-engineering success at scale." },
-    { type: 'logo', avatar: 'FO', avatarBg: '#991b1b', name: 'Fatima O.', handle: '@fatimafit', subs: '35K subs', quote: "Went from 3K to 35K in 6 months. I credit Zenify for finding the content gaps I was missing." },
+    { type: 'logo', avatar: 'FO', avatarBg: '#991b1b', name: 'Fatima O.', handle: '@fatimafit', subs: '35K subs', quote: "Went from 3K to 35K in 6 months. I credit HypeCTR for finding the content gaps I was missing." },
     { type: 'face', avatar: '👩🏾', avatarBg: '#1a1535', name: 'Luke T.', handle: '@luketravels', subs: '93K subs', quote: "The time savings alone justify the subscription. The results are just a bonus." },
     { type: 'logo', avatar: 'AJ', avatarBg: '#4338ca', name: 'Amara J.', handle: '@amarajournals', subs: '56K subs', quote: "My editor asks why my briefs have gotten so much better. I just smile." },
     { type: 'face', avatar: '🧑🏼', avatarBg: '#0f2818', name: 'Ben R.', handle: '@benreviews', subs: '188K subs', quote: "Five ranked ideas with scoring logic. No decision fatigue. Just execute." },
@@ -396,7 +412,7 @@ function Testimonials() {
       `}</style>
       <div style={{ textAlign: 'center', marginBottom: 56, padding: '0 24px' }}>
         <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-1px', marginBottom: 16 }}>
-          Creators are growing with Zenify
+          Creators are growing with HypeCTR
         </h2>
         <p style={{ fontSize: 17, color: 'var(--muted)' }}>
           Join 1,200+ creators who use data to build smarter strategies.
@@ -433,7 +449,7 @@ function Pricing({ isPro }: { isPro: boolean }) {
           name="Free"
           price="$0"
           period=""
-          description="Try Zenify on any channel"
+          description="Try HypeCTR on any channel"
           features={['3 analyses per day', '1 ranked idea per analysis', 'Title + performance reason', 'YouTube data insights']}
           cta="Start for free"
           accent={false}
@@ -520,7 +536,7 @@ function CtaBanner() {
           Ready to grow your channel?
         </h2>
         <p style={{ fontSize: 17, color: 'var(--muted)', marginBottom: 36 }}>
-          Join creators who use Zenify to build smarter content strategies.
+          Join creators who use HypeCTR to build smarter content strategies.
         </p>
         <CheckoutButton style={{
           background: 'var(--accent)', color: 'var(--bg)', border: 'none',
@@ -537,13 +553,13 @@ function Footer() {
     <footer style={{ borderTop: '1px solid var(--border)', padding: '32px 24px' }}>
       <div style={{ maxWidth: 1120, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.5px' }}>
-          Zen<span style={{ color: 'var(--accent)' }}>ify</span>
+          Hype<span style={{ color: 'var(--accent)' }}>CTR</span>
         </span>
-        <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>© 2025 Zenify. All rights reserved.</p>
+        <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0 }}>© 2026 HypeCTR. All rights reserved.</p>
         <div style={{ display: 'flex', gap: 24 }}>
-          {['Privacy', 'Terms', 'Contact'].map(link => (
-            <a key={link} href="#" className="footer-link">{link}</a>
-          ))}
+          <a href="/privacy" className="footer-link">Privacy</a>
+          <a href="/terms" className="footer-link">Terms</a>
+          <a href="/contact" className="footer-link">Contact</a>
         </div>
       </div>
     </footer>
