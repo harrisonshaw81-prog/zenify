@@ -354,17 +354,14 @@ function TestimonialCard({ t }: { t: TCard }) {
         &ldquo;{t.quote}&rdquo;
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 38, height: 38, flexShrink: 0,
-          background: t.avatarBg,
-          borderRadius: t.type === 'face' ? '50%' : 8,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: t.type === 'face' ? 22 : 13,
-          fontWeight: t.type === 'logo' ? 700 : 400,
-          color: 'white',
-        }}>
-          {t.avatar}
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(t.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
+          alt={t.name}
+          width={38}
+          height={38}
+          style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0 }}
+        />
         <div>
           <div style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</div>
           <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{t.handle} · {t.subs}</div>
