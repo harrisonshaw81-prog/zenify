@@ -354,14 +354,18 @@ function TestimonialCard({ t }: { t: TCard }) {
         &ldquo;{t.quote}&rdquo;
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(t.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`}
-          alt={t.name}
-          width={38}
-          height={38}
-          style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0 }}
-        />
+        <div style={{
+          width: 40, height: 40, flexShrink: 0,
+          background: t.avatarBg,
+          borderRadius: t.type === 'face' ? '50%' : 10,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: t.avatar.length === 1 ? 18 : 13,
+          fontWeight: 800,
+          color: 'white',
+          letterSpacing: t.avatar.length > 1 ? '-0.5px' : '0',
+        }}>
+          {t.avatar}
+        </div>
         <div>
           <div style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</div>
           <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{t.handle} · {t.subs}</div>
@@ -373,26 +377,26 @@ function TestimonialCard({ t }: { t: TCard }) {
 
 function Testimonials() {
   const all: TCard[] = [
-    { type: 'face', avatar: '🧑🏻', avatarBg: '#1e1042', name: 'Marcus R.', handle: '@marcusbuilds', subs: '84K subs', quote: "HypeCTR gave me 5 ideas in 30 seconds that would've taken me an afternoon. Three hit the top 10% of my channel." },
-    { type: 'logo', avatar: 'SL', avatarBg: '#0d9488', name: 'Sophie L.', handle: '@sophielearns', subs: '210K subs', quote: "The thumbnail concepts alone are worth it. Paste the output to my designer and we're done in minutes." },
-    { type: 'face', avatar: '👨🏾', avatarBg: '#0c2340', name: 'James T.', handle: '@jamestechreviews', subs: '47K subs', quote: "The analysis picked up a hook pattern in my top videos I hadn't noticed myself. Immediately actionable." },
-    { type: 'logo', avatar: 'CM', avatarBg: '#f97316', name: 'Chris M.', handle: '@chrismoneytalks', subs: '156K subs', quote: "The ranked list is the best part. I know exactly which idea to execute first, no second-guessing." },
-    { type: 'face', avatar: '👩🏽', avatarBg: '#2a0e1f', name: 'Aisha N.', handle: '@aishalifts', subs: '22K subs', quote: "My last three videos all hit 50K+ views. HypeCTR changed the way I approach content planning entirely." },
-    { type: 'logo', avatar: 'TB', avatarBg: '#3b82f6', name: 'Tom B.', handle: '@tombuildsstuff', subs: '89K subs', quote: "I run it every Monday before planning the week. The workflow difference is massive." },
-    { type: 'face', avatar: '👩🏻', avatarBg: '#1a1535', name: 'Lena S.', handle: '@lenastudio', subs: '44K subs', quote: "It found my hook formula before I did. That pattern recognition alone is worth the subscription." },
-    { type: 'logo', avatar: 'RJ', avatarBg: '#be185d', name: 'Ryan J.', handle: '@ryanjourneys', subs: '302K subs', quote: "Saved me 3 hours of research per video. I tracked it. That's not marketing copy." },
-    { type: 'face', avatar: '🧑🏽', avatarBg: '#0f2818', name: 'Priya K.', handle: '@priyacooks', subs: '31K subs', quote: "Went from posting once a month to twice a week. The ideas never dry up with HypeCTR." },
-    { type: 'logo', avatar: 'MW', avatarBg: '#7c3aed', name: 'Mei W.', handle: '@meiwanders', subs: '18K subs', quote: "As a new creator this gave me a roadmap I didn't know I needed. Wish I'd found it sooner." },
-    { type: 'face', avatar: '👨🏻', avatarBg: '#1e1042', name: 'David P.', handle: '@davidspreneur', subs: '67K subs', quote: "I've tried other tools. None of them go this deep on actual channel data." },
-    { type: 'logo', avatar: 'ZH', avatarBg: '#0f766e', name: 'Zara H.', handle: '@zarahealthtips', subs: '129K subs', quote: "The performance predictions are scary accurate. I trust them more than my own instincts now." },
-    { type: 'face', avatar: '🧑🏿', avatarBg: '#0c2340', name: 'Noah C.', handle: '@noahcodes', subs: '11K subs', quote: "Worth every dollar just for the thumbnail concepts. I'd honestly pay twice." },
-    { type: 'logo', avatar: 'EB', avatarBg: '#b45309', name: 'Elena B.', handle: '@elenabeauty', subs: '241K subs', quote: "HypeCTR helped me find a niche angle I'd completely overlooked in my own channel for two years." },
-    { type: 'face', avatar: '👨🏽', avatarBg: '#2a0e1f', name: 'Sam K.', handle: '@samkitchen', subs: '78K subs', quote: "I analyze every channel I admire. It's like reverse-engineering success at scale." },
-    { type: 'logo', avatar: 'FO', avatarBg: '#991b1b', name: 'Fatima O.', handle: '@fatimafit', subs: '35K subs', quote: "Went from 3K to 35K in 6 months. I credit HypeCTR for finding the content gaps I was missing." },
-    { type: 'face', avatar: '👩🏾', avatarBg: '#1a1535', name: 'Luke T.', handle: '@luketravels', subs: '93K subs', quote: "The time savings alone justify the subscription. The results are just a bonus." },
-    { type: 'logo', avatar: 'AJ', avatarBg: '#4338ca', name: 'Amara J.', handle: '@amarajournals', subs: '56K subs', quote: "My editor asks why my briefs have gotten so much better. I just smile." },
-    { type: 'face', avatar: '🧑🏼', avatarBg: '#0f2818', name: 'Ben R.', handle: '@benreviews', subs: '188K subs', quote: "Five ranked ideas with scoring logic. No decision fatigue. Just execute." },
-    { type: 'logo', avatar: 'YM', avatarBg: '#065f46', name: 'Yuki M.', handle: '@yukiminimalist', subs: '29K subs', quote: "Sent this to every creator I know. That's the best testimonial I can give." },
+    { type: 'face', avatar: 'MR', avatarBg: 'linear-gradient(135deg,#1e3a8a,#7c3aed)', name: 'Marcus R.', handle: '@marcusbuilds', subs: '84K subs', quote: "HypeCTR gave me 5 ideas in 30 seconds that would've taken me an afternoon. Three hit the top 10% of my channel." },
+    { type: 'logo', avatar: 'SL', avatarBg: 'linear-gradient(135deg,#134e4a,#0d9488)', name: 'Sophie L.', handle: '@sophielearns', subs: '210K subs', quote: "The thumbnail concepts alone are worth it. Paste the output to my designer and we're done in minutes." },
+    { type: 'face', avatar: 'JT', avatarBg: 'linear-gradient(45deg,#0c2340,#1d4ed8)', name: 'James T.', handle: '@jamestechreviews', subs: '47K subs', quote: "The analysis picked up a hook pattern in my top videos I hadn't noticed myself. Immediately actionable." },
+    { type: 'logo', avatar: 'CM', avatarBg: 'linear-gradient(135deg,#7c2d12,#f97316)', name: 'Chris M.', handle: '@chrismoneytalks', subs: '156K subs', quote: "The ranked list is the best part. I know exactly which idea to execute first, no second-guessing." },
+    { type: 'face', avatar: 'AN', avatarBg: 'linear-gradient(45deg,#831843,#e11d48)', name: 'Aisha N.', handle: '@aishalifts', subs: '22K subs', quote: "My last three videos all hit 50K+ views. HypeCTR changed the way I approach content planning entirely." },
+    { type: 'logo', avatar: 'TB', avatarBg: 'linear-gradient(135deg,#1e3a8a,#3b82f6)', name: 'Tom B.', handle: '@tombuildsstuff', subs: '89K subs', quote: "I run it every Monday before planning the week. The workflow difference is massive." },
+    { type: 'face', avatar: 'L', avatarBg: 'linear-gradient(135deg,#312e81,#6366f1)', name: 'Lena S.', handle: '@lenastudio', subs: '44K subs', quote: "It found my hook formula before I did. That pattern recognition alone is worth the subscription." },
+    { type: 'logo', avatar: 'RJ', avatarBg: 'linear-gradient(45deg,#831843,#ec4899)', name: 'Ryan J.', handle: '@ryanjourneys', subs: '302K subs', quote: "Saved me 3 hours of research per video. I tracked it. That's not marketing copy." },
+    { type: 'face', avatar: 'PK', avatarBg: 'linear-gradient(135deg,#14532d,#0f766e)', name: 'Priya K.', handle: '@priyacooks', subs: '31K subs', quote: "Went from posting once a month to twice a week. The ideas never dry up with HypeCTR." },
+    { type: 'logo', avatar: 'MW', avatarBg: 'linear-gradient(135deg,#4c1d95,#8b5cf6)', name: 'Mei W.', handle: '@meiwanders', subs: '18K subs', quote: "As a new creator this gave me a roadmap I didn't know I needed. Wish I'd found it sooner." },
+    { type: 'face', avatar: 'D', avatarBg: 'linear-gradient(180deg,#1e1042,#7c3aed)', name: 'David P.', handle: '@davidspreneur', subs: '67K subs', quote: "I've tried other tools. None of them go this deep on actual channel data." },
+    { type: 'logo', avatar: 'ZH', avatarBg: 'linear-gradient(45deg,#134e4a,#10b981)', name: 'Zara H.', handle: '@zarahealthtips', subs: '129K subs', quote: "The performance predictions are scary accurate. I trust them more than my own instincts now." },
+    { type: 'face', avatar: 'NC', avatarBg: 'linear-gradient(135deg,#0c2340,#0284c7)', name: 'Noah C.', handle: '@noahcodes', subs: '11K subs', quote: "Worth every dollar just for the thumbnail concepts. I'd honestly pay twice." },
+    { type: 'logo', avatar: 'EB', avatarBg: 'linear-gradient(135deg,#78350f,#d97706)', name: 'Elena B.', handle: '@elenabeauty', subs: '241K subs', quote: "HypeCTR helped me find a niche angle I'd completely overlooked in my own channel for two years." },
+    { type: 'face', avatar: 'SK', avatarBg: 'linear-gradient(45deg,#422006,#b45309)', name: 'Sam K.', handle: '@samkitchen', subs: '78K subs', quote: "I analyze every channel I admire. It's like reverse-engineering success at scale." },
+    { type: 'logo', avatar: 'FO', avatarBg: 'linear-gradient(135deg,#7f1d1d,#ef4444)', name: 'Fatima O.', handle: '@fatimafit', subs: '35K subs', quote: "Went from 3K to 35K in 6 months. I credit HypeCTR for finding the content gaps I was missing." },
+    { type: 'face', avatar: 'LT', avatarBg: 'linear-gradient(135deg,#14532d,#0d9488)', name: 'Luke T.', handle: '@luketravels', subs: '93K subs', quote: "The time savings alone justify the subscription. The results are just a bonus." },
+    { type: 'logo', avatar: 'AJ', avatarBg: 'linear-gradient(135deg,#1e1b4b,#4f46e5)', name: 'Amara J.', handle: '@amarajournals', subs: '56K subs', quote: "My editor asks why my briefs have gotten so much better. I just smile." },
+    { type: 'face', avatar: 'B', avatarBg: 'linear-gradient(45deg,#1e1b4b,#2563eb)', name: 'Ben R.', handle: '@benreviews', subs: '188K subs', quote: "Five ranked ideas with scoring logic. No decision fatigue. Just execute." },
+    { type: 'logo', avatar: 'YM', avatarBg: 'linear-gradient(135deg,#14532d,#16a34a)', name: 'Yuki M.', handle: '@yukiminimalist', subs: '29K subs', quote: "Sent this to every creator I know. That's the best testimonial I can give." },
   ]
 
   const row1 = all.slice(0, 10)
