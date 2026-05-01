@@ -5,6 +5,7 @@ import CheckoutButton from '@/components/CheckoutButton'
 import StarBackground from '@/components/ui/star-background'
 import { TiltCard } from '@/components/ui/tilt-card'
 import RestoreAccessButton from '@/components/RestoreAccessButton'
+import ManageSubscriptionButton from '@/components/ManageSubscriptionButton'
 import ProductMockup from '@/components/ui/product-mockup'
 import AnalyzerCard from '@/components/AnalyzerCard'
 
@@ -64,7 +65,7 @@ function Navbar({ isPro }: { isPro: boolean }) {
             <a href="#features" className="nav-link">Features</a>
             <a href="#how-it-works" className="nav-link">How it Works</a>
             <a href="#pricing" className="nav-link">Pricing</a>
-            {!isPro && <RestoreAccessButton />}
+            {isPro ? <ManageSubscriptionButton /> : <RestoreAccessButton />}
           </div>
           {!isPro && <CheckoutButton style={{
             fontSize: 14, fontWeight: 600, color: 'var(--bg)', background: 'var(--accent)',

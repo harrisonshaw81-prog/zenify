@@ -104,42 +104,34 @@ function Scene1() {
 }
 
 function Scene2() {
-  const ideas = [
-    { rank: 1, title: 'I Bought Every Car at This Junkyard', hot: true },
-    { rank: 2, title: 'Teaching My Truck to Fly (Gone Wrong)' },
-    { rank: 3, title: 'What Happens When You Fill a Truck with Concrete' },
-  ]
   return (
     <div style={{ padding: '20px 24px' }}>
       <div style={{ fontSize: 9, color: MUTED, marginBottom: 12 }}>
-        5 ranked ideas · YourChannel
+        Top idea · YourChannel
       </div>
-      {ideas.map((idea) => (
-        <div key={idea.rank} style={{
-          background: idea.hot ? ACCENT_DIM : SURFACE,
-          border: `1px solid ${idea.hot ? ACCENT : BORDER}`,
-          borderRadius: 8, padding: '10px 12px', marginBottom: 7,
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <span style={{
-            minWidth: 20, height: 20, borderRadius: 5,
-            background: idea.hot ? ACCENT : SURFACE,
-            color: idea.hot ? '#09090f' : MUTED,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 8, fontWeight: 800,
-          }}>#{idea.rank}</span>
-          <span style={{ fontSize: 9.5, fontWeight: 600, lineHeight: 1.4, color: idea.hot ? '#fff' : 'rgba(255,255,255,0.8)' }}>
-            {idea.title}
-          </span>
-        </div>
-      ))}
       <div style={{
-        height: 28, borderRadius: 8, background: SURFACE,
+        background: ACCENT_DIM,
+        border: `1px solid ${ACCENT}`,
+        borderRadius: 8, padding: '10px 12px', marginBottom: 7,
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <span style={{
+          minWidth: 20, height: 20, borderRadius: 5,
+          background: ACCENT, color: '#09090f',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 8, fontWeight: 800,
+        }}>#1</span>
+        <span style={{ fontSize: 9.5, fontWeight: 600, lineHeight: 1.4, color: '#fff' }}>
+          I Bought Every Car at This Junkyard
+        </span>
+      </div>
+      <div style={{
+        height: 34, borderRadius: 8, background: SURFACE,
         border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center',
         justifyContent: 'center', gap: 4,
       }}>
         <span style={{ fontSize: 8, color: MUTED }}>🔒</span>
-        <span style={{ fontSize: 8, color: MUTED }}>2 more ideas - upgrade to Pro</span>
+        <span style={{ fontSize: 8, color: MUTED }}>4 more ideas — upgrade to Pro</span>
       </div>
     </div>
   )
